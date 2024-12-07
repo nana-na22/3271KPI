@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nana KPI Calculator</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.7.0/chart.min.js"></script>
+<style>
+  body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #dcd874;
+    margin: 0;
+    padding: 20px;
+    color: #333;
+  }
+  .container {
+    max-width: 800px;
+    margin: 0 auto;
+    background: #fff;
+    padding: 30px;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  }
+  h2, h3 {
+    color: #2c3e50;
+    margin-bottom: 20px;
+  }
+  label {
+    font-size: 16px;
+    font-weight: bold;
+    display: block;
+    margin-top: 10px;
+  }
+  select, input[type="text"] {
+    width: 100%;
+    padding: 12px;
+    margin: 10px 0;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    box-sizing: border-box;
+    font-size: 16px;
+  }
+  button {
+    padding: 12px 24px;
+    background-color: #3498db;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: background-color 0.3s;
+    margin-top: 10px;
+  }
+  button:hover {
+    background-color: #2980b9;
+  }
+  .description, .point-info {
+    margin-top: 20px;
+    padding: 15px;
+    background-color: #ecf0f1;
+    border-radius: 4px;
+    color: #34495e;
+  }
+  .category {
+    font-weight: bold;
+    color: #2c3e50;
+    margin-top: 10px;
+  }
+  #chartContainer {
+    margin-top: 30px;
+  }
+  .point-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+  }
+  .point-table th, .point-table td {
+    border: 1px solid #ddd;
+    padding: 8px;
+    text-align: left;
+  }
+  .point-table th {
+    background-color: #f2f2f2;
+  }
+  .point-info {
+    margin-top: 40px; 
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <h2>Kingdom 3271 KPI Calculator</h2>
+
+  <label for="accountType">Type of Account:</label>
+  <select id="accountType">
+    <option value="main">Main account</option>
+    <option value="farm">Farm account</option>
+  </select>
+
+  <label for="powerInput">Power:</label>
+  <input type="text" id="powerInput" placeholder="Enter Power" onkeyup="formatNumber(this)">
+
+  <button onclick="calculateRequirement()">Calculate</button>
+  
+  <!-- Removed #result div -->
+
+  <div class="category" style="display:none;"></div>
+  <div class="description" style="display:none;"></div>
+
+  <div id="chartContainer">
+    <canvas id="resultChart"></canvas>
+  </div>
+
+  <div class="point-info" style="display:none;">
+    <h3>Point Information</h3>
+    <table class="point-table">
+      <tr>
+        <th>Action</th>
+        <th>Points</th>
+      </tr>
+      <tr>
+        <td>T4 Kill</td>
+        <td>10 Points</td>
+      </tr>
+      <tr>
+        <td>T5 Kill</td>
+        <td>15 Points</td>
+      </tr>
+      <tr>
+        <td>Dead</td>
+        <td>25 Points</td>
+      </tr>
+    </table>
+  </div>
+</div>
+
+<script>
+let chart;
+
+function formatNumber(input) {
+  let value = input.value.replace(/\D/g, '');
+  input.value = new Intl.NumberFormat('en-US').format(value).replace(/,/g, '.');
+}
+
+function calculateRequirement() {
+  var powerStr = document.getElementById('powerInput').value;
+  var power = parseFloat(powerStr.replace(/\./g, ''));
+  var accountType = document.getElementById('accountType').value;
+
+  if (!power || power <= 0) {
+    alert('Please enter a valid value for Power.');
+    return;
+  }
+
+  // Dead Requirements:
+  // Main:
+  //  - Power > 40M: Dead = 1.5% (0.015)
+  //  - Power ≤ 40M: Dead = 3.5% (0.035)
+  // Farm:
+  //  - Power < 40M: Dead = 2.5% (0.025)
+  //  - Power ≥ 40M: Dead = 4.5% (0.045)
+
+  let deadRequirement = 0;
+  if (accountType === 'main') {
+    if (power > 40000000) {
+      deadRequirement = power * 0.015;
+    } else {
+      deadRequirement = power * 0.035;
+    }
+  } else {
+    // farm account
+    if (power < 40000000) {
+      deadRequirement = power * 0.025;
+    } else {
+      deadRequirement = power * 0.045;
+    }
+  }
+
+  // DKP Requirements
+  // <20m = 0M
+  // 20-24.9m = 50M
+  // 25-29.9m = 80M
+  // 30-34.9m = 100M
+  // 35-40.9m = 120M
+  // 41-51.9m = 160M
+  // 52-61.9m = 200M
+  // 62-71.9m = 260M
+  // 72-81.9m = 300M
+  // 82-94.9m = 350M
+  // ≥95m = 400M
+
+  let dkpGoal = 0;
+  if (power < 20000000) {
+    dkpGoal = 0;
+  } else if (power < 25000000) {
+    dkpGoal = 50000000;
+  } else if (power < 30000000) {
+    dkpGoal = 80000000;
+  } else if (power < 35000000) {
+    dkpGoal = 100000000;
+  } else if (power < 41000000) {
+    dkpGoal = 120000000;
+  } else if (power < 52000000) {
+    dkpGoal = 160000000;
+  } else if (power < 62000000) {
+    dkpGoal = 200000000;
+  } else if (power < 72000000) {
+    dkpGoal = 260000000;
+  } else if (power < 82000000) {
+    dkpGoal = 300000000;
+  } else if (power < 95000000) {
+    dkpGoal = 350000000;
+  } else {
+    dkpGoal = 400000000;
+  }
+
+  var dkpGoalFormatted = new Intl.NumberFormat('en-US').format(dkpGoal).replace(/,/g, '.');
+  var deadRequirementFormatted = new Intl.NumberFormat('en-US').format(deadRequirement).replace(/,/g, '.');
+
+  // Removed #result setting lines
+
+  let category = accountType === 'main' ? 'Main Account' : 'Farm Account';
+  
+  document.querySelector('.category').style.display = 'block';
+  document.querySelector('.category').textContent = 'Account type: ' + category;
+  
+  document.querySelector('.description').style.display = 'block';
+  document.querySelector('.description').innerHTML = `
+    <p><strong>DKP Goal:</strong> ${dkpGoalFormatted}</p>
+    <p><strong>Dead Requirement:</strong> ${deadRequirementFormatted}</p>
+  `;
+
+  updateChart(dkpGoal, deadRequirement);
+  document.querySelector('.point-info').style.display = 'block';
+}
+
+function updateChart(dkpGoal, deadRequirement) {
+  const ctx = document.getElementById('resultChart').getContext('2d');
+  
+  if (chart) {
+    chart.destroy();
+  }
+
+  chart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: ['DKP Goal', 'Dead Requirement'],
+      datasets: [{
+        label: 'Points',
+        data: [dkpGoal, deadRequirement],
+        backgroundColor: [
+          'rgba(54, 162, 235, 0.6)',
+          'rgba(255, 99, 132, 0.6)'
+        ],
+        borderColor: [
+          'rgba(54, 162, 235, 1)',
+          'rgba(255, 99, 132, 1)'
+        ],
+        borderWidth: 1
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: {
+        y: {
+          beginAtZero: true,
+          title: {
+            display: true,
+            text: 'Points'
+          }
+        }
+      },
+      plugins: {
+        tooltip: {
+          callbacks: {
+            label: function(context) {
+              let label = context.dataset.label || '';
+              if (label) {
+                label += ': ';
+              }
+              if (context.parsed.y !== null) {
+                label += new Intl.NumberFormat('en-US').format(context.parsed.y.toFixed(0)).replace(/,/g, '.') + ' Points';
+              }
+              return label;
+            }
+          }
+        }
+      }
+    }
+  });
+}
+</script>
+</body>
+</html>
