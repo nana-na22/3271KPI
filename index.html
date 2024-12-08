@@ -155,64 +155,63 @@ function calculateRequirement() {
 
   // Dead Requirements:
   // Main:
-  //  - Power > 40M: Dead = 1.5% (0.015)
-  //  - Power ≤ 40M: Dead = 3.5% (0.035)
+  //  - Power > 40M: Dead = 2.2% (0.022)
+  //  - Power ≤ 40M: Dead = 3.2% (0.032)
   // Farm:
-  //  - Power < 40M: Dead = 2.5% (0.025)
-  //  - Power ≥ 40M: Dead = 4.5% (0.045)
+  //  - Power < 40M: Dead = 3.3% (0.033)
+  //  - Power ≥ 40M: Dead = 4.6% (0.046)
 
   let deadRequirement = 0;
   if (accountType === 'main') {
     if (power > 40000000) {
-      deadRequirement = power * 0.015;
+      deadRequirement = power * 0.022;
     } else {
-      deadRequirement = power * 0.035;
+      deadRequirement = power * 0.032;
     }
   } else {
     // farm account
     if (power < 40000000) {
-      deadRequirement = power * 0.025;
+      deadRequirement = power * 0.033;
     } else {
-      deadRequirement = power * 0.045;
+      deadRequirement = power * 0.046;
     }
   }
 
   // DKP Requirements
-  // <20m = 0M
-  // 20-24.9m = 50M
-  // 25-29.9m = 80M
-  // 30-34.9m = 100M
-  // 35-40.9m = 120M
-  // 41-51.9m = 160M
-  // 52-61.9m = 200M
-  // 62-71.9m = 260M
-  // 72-81.9m = 300M
-  // 82-94.9m = 350M
-  // ≥95m = 400M
+  // 20-24.9 m power = 60 M
+  // 25-29.9 m power = 100 M
+  //30-34.9 m power = 120M
+ // 35-40.9 m power = 150M
+// 41-51,9m power = 200M
+// 52-61,9m power = 250M
+// 62-71,9m power = 300M
+// 72-81,9m power = 350M
+// 82-94,9m power = 400M
+// 95m ↑ power  = 450M
 
   let dkpGoal = 0;
   if (power < 20000000) {
     dkpGoal = 0;
   } else if (power < 25000000) {
-    dkpGoal = 50000000;
+    dkpGoal = 60000000;
   } else if (power < 30000000) {
-    dkpGoal = 80000000;
-  } else if (power < 35000000) {
     dkpGoal = 100000000;
-  } else if (power < 41000000) {
+  } else if (power < 35000000) {
     dkpGoal = 120000000;
+  } else if (power < 41000000) {
+    dkpGoal = 150000000;
   } else if (power < 52000000) {
-    dkpGoal = 160000000;
-  } else if (power < 62000000) {
     dkpGoal = 200000000;
+  } else if (power < 62000000) {
+    dkpGoal = 250000000;
   } else if (power < 72000000) {
-    dkpGoal = 260000000;
-  } else if (power < 82000000) {
     dkpGoal = 300000000;
-  } else if (power < 95000000) {
+  } else if (power < 82000000) {
     dkpGoal = 350000000;
-  } else {
+  } else if (power < 95000000) {
     dkpGoal = 400000000;
+  } else {
+    dkpGoal = 450000000;
   }
 
   var dkpGoalFormatted = new Intl.NumberFormat('en-US').format(dkpGoal).replace(/,/g, '.');
